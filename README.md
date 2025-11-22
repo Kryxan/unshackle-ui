@@ -1,3 +1,7 @@
+# my updates
+there are still significant issues with this UI, however I upgraded it from the official repository and added functionality. the backend still needs updates. I had to make some changes to the backend, but due to unforeseen consequences I abandoned those and am not including them. the original UI required websockets, but as that's not implemented in the backend, alternative methods were used. due to the omitted changes I made to the backend, I cannot guarantee this works.
+
+
 # Unshackle UI
 
 A modern web interface for [Unshackle](https://github.com/unshackle-dl/unshackle) - the movie, TV, and music archival software.
