@@ -1,4 +1,4 @@
-import { Search, Download, History, Settings } from "lucide-react";
+import { Search, Download, History, Settings, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores";
@@ -9,6 +9,7 @@ interface NavigationProps {
 
 const navigationTabs = [
   { id: 'search', label: 'Search', icon: Search },
+  { id: 'download', label: 'Download', icon: Plus },
   { id: 'queue', label: 'Queue', icon: Download },
   { id: 'history', label: 'History', icon: History },
   { id: 'services', label: 'Services', icon: Settings },

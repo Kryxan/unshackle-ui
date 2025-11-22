@@ -1,4 +1,4 @@
-import { Download, Clock, CheckCircle, XCircle, X, FolderOpen, RotateCcw } from 'lucide-react';
+import { Download, Clock, CheckCircle, XCircle, X, FolderOpen, RotateCcw, Film, Music, Monitor } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { type DownloadJob } from '@/lib/types';
 import { useDownloadsStore } from '@/stores/downloads-store';
 import { useCancelJob } from '@/lib/api/queries';
+import { useTitleInfo, useTrackInfo } from '@/hooks/use-title-info';
 
 interface DownloadJobCardProps {
   job: DownloadJob;
@@ -17,6 +18,17 @@ interface DownloadJobCardProps {
 export function DownloadJobCard({ job, variant, className }: DownloadJobCardProps) {
   const { cancelJob, retryFailedJob } = useDownloadsStore();
   const cancelJobMutation = useCancelJob();
+  
+  // Extract title_id from job
+  const titleId = job.title_id;
+  const service = job.service;
+  
+  // Use job_id or id for compatibility
+  const jobId = job.job_id || job.id;
+  
+  // Fetch title and track information
+  const { data: titleInfo } = useTitleInfo(service, titleId);
+  const { data: trackInfo } = useTrackInfo(service, titleId);
   
   const statusConfig = {
     active: {
@@ -48,16 +60,38 @@ export function DownloadJobCard({ job, variant, className }: DownloadJobCardProp
   const config = statusConfig[variant];
   const Icon = config.icon;
   
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'Unknown';
+    try {
+      // Handle ISO datetime strings from unshackle API (may not have Z suffix)
+      const isoString = dateString.includes('T') && !dateString.endsWith('Z') 
+        ? dateString + 'Z' 
+        : dateString;
+      return new Date(isoString).toLocaleString();
+    } catch (error) {
+      console.warn('Failed to parse date:', dateString, error);
+      return 'Invalid Date';
+    }
   };
   
-  const formatDuration = (start: string, end: string) => {
-    const duration = new Date(end).getTime() - new Date(start).getTime();
-    const minutes = Math.floor(duration / 60000);
-    const seconds = Math.floor((duration % 60000) / 1000);
-    return `${minutes}m ${seconds}s`;
+  const formatDuration = (start?: string, end?: string) => {
+    if (!start || !end) return null;
+    try {
+      const startTime = new Date(start.includes('T') && !start.endsWith('Z') ? start + 'Z' : start);
+      const endTime = new Date(end.includes('T') && !end.endsWith('Z') ? end + 'Z' : end);
+      const duration = endTime.getTime() - startTime.getTime();
+      const minutes = Math.floor(duration / 60000);
+      const seconds = Math.floor((duration % 60000) / 1000);
+      return `${minutes}m ${seconds}s`;
+    } catch (error) {
+      console.warn('Failed to calculate duration:', start, end, error);
+      return null;
+    }
   };
+
+  // Get the appropriate start and end times from job
+  const getStartTime = () => job.started_time || job.created_time || job.start_time;
+  const getEndTime = () => job.completed_time || job.end_time;
 
   const formatBytes = (bytes: number) => {
     if (bytes === 0) return '0 B';
@@ -65,6 +99,48 @@ export function DownloadJobCard({ job, variant, className }: DownloadJobCardProp
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  // Format rich media information from track data
+  const formatMediaInfo = () => {
+    if (!trackInfo) return null;
+    
+    const parts = [];
+    
+    // Video information
+    const video = trackInfo.video?.[0]; // Best/first video track
+    if (video) {
+      const codec = video.codec_display || video.codec || 'Video';
+      const resolution = video.resolution || (video.width && video.height ? `${video.width}x${video.height}` : '');
+      if (resolution) {
+        parts.push(`${codec} ${resolution}`);
+      } else {
+        parts.push(codec);
+      }
+    }
+    
+    // Audio information
+    const audio = trackInfo.audio?.[0]; // Best/first audio track
+    if (audio) {
+      const codec = audio.codec_display || audio.codec || 'Audio';
+      const channels = audio.channels ? `${audio.channels}.0` : '';
+      if (channels) {
+        parts.push(`${codec} ${channels}`);
+      } else {
+        parts.push(codec);
+      }
+    }
+    
+    return parts.length > 0 ? parts.join(' • ') : null;
+  };
+
+  // Get display title with year
+  const getDisplayTitle = () => {
+    if (titleInfo && titleInfo.name) {
+      const year = titleInfo.year ? ` (${titleInfo.year})` : '';
+      return `${titleInfo.name}${year}`;
+    }
+    return job.content_title;
   };
 
   const getProgressText = () => {
@@ -108,20 +184,41 @@ export function DownloadJobCard({ job, variant, className }: DownloadJobCardProp
             <Icon className={cn("h-5 w-5 flex-shrink-0", config.iconColor)} />
             
             <div className="flex-1 min-w-0">
-              <h3 className="font-medium truncate">{job.content_title}</h3>
+              <h3 className="font-medium truncate">{getDisplayTitle()}</h3>
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <Badge variant="outline" className="text-xs">
                   {job.service}
                 </Badge>
                 <span>•</span>
-                <span>{formatDate(job.start_time)}</span>
-                {job.end_time && (
+                <span>{formatDate(getStartTime())}</span>
+                {getEndTime() && (
                   <>
                     <span>•</span>
-                    <span>{formatDuration(job.start_time, job.end_time)}</span>
+                    <span>{formatDuration(getStartTime(), getEndTime())}</span>
                   </>
                 )}
               </div>
+              {formatMediaInfo() && (
+                <div className="text-xs text-muted-foreground mt-1 flex items-center space-x-1">
+                  <Monitor className="h-3 w-3" />
+                  <span>{formatMediaInfo()}</span>
+                </div>
+              )}
+              
+              {/* Error information for failed jobs */}
+              {variant === 'failed' && (job.error_message || job.error || job.worker_stderr) && (
+                <div className="text-xs text-red-600 mt-1 p-2 bg-red-50 dark:bg-red-950/20 rounded border border-red-200 dark:border-red-800">
+                  <div className="font-medium">Error:</div>
+                  <div className="mt-1">
+                    {job.error_message || job.error || 'Download failed'}
+                  </div>
+                  {job.worker_stderr && (
+                    <div className="mt-1 text-xs font-mono bg-red-100 dark:bg-red-900/30 p-1 rounded">
+                      {job.worker_stderr}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
           

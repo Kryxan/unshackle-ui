@@ -81,23 +81,14 @@ export class UnshackleAPIClient {
     }
   }
 
-  // Search for content
-  async search(params: SearchRequest): Promise<SearchResult[]> {
-    const response = await this.request<SearchResult[]>('/api/v1/search', {
-      method: 'POST',
-      body: JSON.stringify(params),
-    });
-
-    if (response.status === 'error') {
-      throw new Error(response.error?.message || 'Search failed');
-    }
-
-    return response.data || [];
+  // Search for content - NOT AVAILABLE in unshackle serve API
+  async search(_params: SearchRequest): Promise<SearchResult[]> {
+    throw new Error('Search functionality is not available through the unshackle serve API. Use the Download page to enter URLs directly.');
   }
 
   // Start a download
   async startDownload(params: DownloadRequest): Promise<string> {
-    const response = await this.request<{ job_id: string }>('/api/v1/downloads/start', {
+    const response = await this.request<{ job_id: string }>('/api/download', {
       method: 'POST',
       body: JSON.stringify(params),
     });
@@ -111,7 +102,7 @@ export class UnshackleAPIClient {
 
   // Get job status
   async getJobStatus(jobId: string): Promise<DownloadJob> {
-    const response = await this.request<DownloadJob>(`/api/v1/downloads/jobs/${jobId}`);
+    const response = await this.request<DownloadJob>(`/api/download/jobs/${jobId}`);
 
     if (response.status === 'error') {
       throw new Error(response.error?.message || 'Failed to get job status');
@@ -124,21 +115,28 @@ export class UnshackleAPIClient {
     return response.data;
   }
 
-  // Get all jobs
+  // Get all jobs (backend uses /api/download/jobs, not /queue)
   async getAllJobs(): Promise<DownloadJob[]> {
-    const response = await this.request<DownloadJob[]>('/api/v1/downloads/queue');
+    // Try with include_full_details to get error information
+    const response = await this.request<{ jobs: DownloadJob[] }>('/api/download/jobs?include_full_details=true');
 
+    // unshackle serve API returns raw JSON directly, not wrapped in status/data format
+    if ('jobs' in response) {
+      return (response as any).jobs || [];
+    }
+
+    // Fallback to wrapped format for other API implementations
     if (response.status === 'error') {
       throw new Error(response.error?.message || 'Failed to get jobs');
     }
 
-    return response.data || [];
+    return response.data?.jobs || [];
   }
 
   // Cancel a job
   async cancelJob(jobId: string): Promise<void> {
-    const response = await this.request(`/api/v1/downloads/jobs/${jobId}/cancel`, {
-      method: 'POST',
+    const response = await this.request(`/api/download/jobs/${jobId}`, {
+      method: 'DELETE',
     });
 
     if (response.status === 'error') {
@@ -146,90 +144,96 @@ export class UnshackleAPIClient {
     }
   }
 
-  // Get available services
+  // Get available services (backend uses /api/services)
   async getServices(): Promise<ServiceInfo[]> {
-    const response = await this.request<ServiceInfo[]>('/api/v1/availability/services');
+    const response = await this.request<{ services: ServiceInfo[] }>('/api/services');
 
+    // unshackle serve API returns raw JSON directly, not wrapped in status/data format
+    if ('services' in response) {
+      return (response as any).services || [];
+    }
+
+    // Fallback to wrapped format for other API implementations
     if (response.status === 'error') {
       throw new Error(response.error?.message || 'Failed to get services');
     }
 
-    return response.data || [];
+    return response.data?.services || [];
   }
 
-
-  // Test service connection
-  async testService(serviceId: string): Promise<boolean> {
-    const response = await this.request<{ success: boolean }>(`/api/v1/services/${serviceId}/test`, {
+  // Get title information for a specific service and title ID
+  async getTitleInfo(service: string, titleId: string): Promise<any> {
+    const response = await this.request<any>('/api/list-titles', {
       method: 'POST',
+      body: JSON.stringify({ service, title_id: titleId }),
     });
 
-    if (response.status === 'error') {
-      throw new Error(response.error?.message || 'Service test failed');
+    // Handle both wrapped and direct response formats
+    if ('titles' in response && Array.isArray(response.titles)) {
+      return response.titles[0] || null;
+    }
+    if (response.data && 'titles' in response.data) {
+      return response.data.titles[0] || null;
     }
 
-    return response.data?.success || false;
+    if (response.status === 'error') {
+      throw new Error(response.error?.message || 'Failed to get title info');
+    }
+
+    return null;
   }
 
-  // Authenticate with service
-  async authenticateService(params: ServiceAuthRequest): Promise<void> {
-    const response = await this.request(`/api/v1/services/${params.service_id}/auth`, {
+  // Get track information for a specific service and title ID
+  async getTrackInfo(service: string, titleId: string): Promise<any> {
+    const response = await this.request<any>('/api/list-tracks', {
       method: 'POST',
-      body: JSON.stringify({ credentials: params.credentials }),
+      body: JSON.stringify({ service, title_id: titleId }),
     });
 
-    if (response.status === 'error') {
-      throw new Error(response.error?.message || 'Authentication failed');
+    // Handle both wrapped and direct response formats
+    if ('title' in response) {
+      return response;
     }
+    if (response.data && 'title' in response.data) {
+      return response.data;
+    }
+
+    if (response.status === 'error') {
+      throw new Error(response.error?.message || 'Failed to get track info');
+    }
+
+    return null;
   }
 
-  // Logout from service
-  async logoutService(serviceId: string): Promise<void> {
-    const response = await this.request(`/api/v1/services/${serviceId}/auth`, {
-      method: 'DELETE',
-    });
 
-    if (response.status === 'error') {
-      throw new Error(response.error?.message || 'Logout failed');
-    }
+  // Test service connection - NOT AVAILABLE in unshackle serve API
+  async testService(_serviceId: string): Promise<boolean> {
+    throw new Error('Service testing is not available through the unshackle serve API.');
   }
 
-  // Get service configuration
-  async getServiceConfig(serviceId: string): Promise<ServiceConfig> {
-    const response = await this.request<ServiceConfig>(`/api/v1/services/${serviceId}/config`);
-
-    if (response.status === 'error') {
-      throw new Error(response.error?.message || 'Failed to get service config');
-    }
-
-    if (!response.data) {
-      throw new Error('No config data received');
-    }
-
-    return response.data;
+  // Authenticate with service - NOT AVAILABLE in unshackle serve API
+  async authenticateService(_params: ServiceAuthRequest): Promise<void> {
+    throw new Error('Service authentication is not available through the unshackle serve API.');
   }
 
-  // Update service configuration
-  async updateServiceConfig(params: ServiceConfigRequest): Promise<void> {
-    const response = await this.request(`/api/v1/services/${params.service_id}/config`, {
-      method: 'PUT',
-      body: JSON.stringify(params.config),
-    });
-
-    if (response.status === 'error') {
-      throw new Error(response.error?.message || 'Failed to update service config');
-    }
+  // Logout from service - NOT AVAILABLE in unshackle serve API
+  async logoutService(_serviceId: string): Promise<void> {
+    throw new Error('Service logout is not available through the unshackle serve API.');
   }
 
-  // Enable/disable service
-  async toggleService(serviceId: string, enabled: boolean): Promise<void> {
-    const response = await this.request(`/api/v1/services/${serviceId}/${enabled ? 'enable' : 'disable'}`, {
-      method: 'POST',
-    });
+  // Get service configuration - NOT AVAILABLE in unshackle serve API
+  async getServiceConfig(_serviceId: string): Promise<ServiceConfig> {
+    throw new Error('Service configuration access is not available through the unshackle serve API.');
+  }
 
-    if (response.status === 'error') {
-      throw new Error(response.error?.message || `Failed to ${enabled ? 'enable' : 'disable'} service`);
-    }
+  // Update service configuration - NOT AVAILABLE in unshackle serve API
+  async updateServiceConfig(_params: ServiceConfigRequest): Promise<void> {
+    throw new Error('Service configuration updates are not available through the unshackle serve API.');
+  }
+
+  // Enable/disable service - NOT AVAILABLE in unshackle serve API
+  async toggleService(_serviceId: string, _enabled: boolean): Promise<void> {
+    throw new Error('Service toggle functionality is not available through the unshackle serve API.');
   }
 
   // WebSocket connection for job-specific events
@@ -253,7 +257,7 @@ export class UnshackleAPIClient {
       return;
     }
 
-    const wsURL = this.baseURL.replace(/^http/, 'ws') + `/api/v1/downloads/jobs/${jobId}/events?token=devwork`;
+    const wsURL = this.baseURL.replace(/^http/, 'ws') + `/api/download/jobs/${jobId}/events?token=devwork`;
     this.wsConnection = new WebSocket(wsURL);
 
     this.wsConnection.onopen = () => {
@@ -319,7 +323,7 @@ export class UnshackleAPIClient {
       return;
     }
 
-    const wsURL = this.baseURL.replace(/^http/, 'ws') + `/api/v1/events?token=devwork`;
+    const wsURL = this.baseURL.replace(/^http/, 'ws') + `/api/events?token=devwork`;
     this.wsConnection = new WebSocket(wsURL);
 
     this.wsConnection.onopen = () => {

@@ -67,7 +67,7 @@ export const useUIStore = create<UIState>()(
       (set, get) => ({
         // Initial state
         theme: 'system',
-        activeTab: 'search',
+        activeTab: 'download',
         modals: {},
         notifications: [],
         connectionStatus: {

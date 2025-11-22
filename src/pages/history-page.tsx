@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Calendar, FileDown, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 import { useJobs } from '@/lib/api/queries';
 import { useDownloadsStore } from '@/stores/downloads-store';
+import { DownloadJobCard } from '@/components/downloads/download-job-card';
 
 export function HistoryPage() {
   const { data: jobs = [], isLoading, error } = useJobs();
@@ -12,7 +13,11 @@ export function HistoryPage() {
   // Filter for completed and failed jobs (history)
   const historyJobs = jobs.filter(job => 
     job.status === 'completed' || job.status === 'failed'
-  ).sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
+  ).sort((a, b) => {
+    const aTime = a.completed_time || a.started_time || a.created_time || a.start_time || '';
+    const bTime = b.completed_time || b.started_time || b.created_time || b.start_time || '';
+    return new Date(bTime).getTime() - new Date(aTime).getTime();
+  });
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -109,49 +114,12 @@ export function HistoryPage() {
       {!isLoading && !error && historyJobs.length > 0 && (
         <div className="space-y-4">
           {historyJobs.map((job) => (
-            <Card key={job.id}>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    {getStatusIcon(job.status)}
-                    <div>
-                      <CardTitle className="text-lg">{job.content_title}</CardTitle>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <CardDescription className="text-sm font-mono">
-                          {job.service}
-                        </CardDescription>
-                        {getStatusBadge(job.status)}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right text-sm text-muted-foreground">
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="h-3 w-3" />
-                      <span>{formatDate(job.start_time)}</span>
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {job.error && (
-                    <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
-                      <strong>Error:</strong> {job.error}
-                    </div>
-                  )}
-                  {job.status === 'completed' && job.total_bytes && (
-                    <div className="text-sm text-muted-foreground">
-                      Downloaded: {(job.total_bytes / 1024 / 1024 / 1024).toFixed(2)} GB
-                    </div>
-                  )}
-                  {job.end_time && (
-                    <div className="text-sm text-muted-foreground">
-                      Completed: {formatDate(job.end_time)}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <DownloadJobCard 
+              key={job.job_id || job.id} 
+              job={job} 
+              variant={job.status as 'completed' | 'failed'} 
+              className="w-full"
+            />
           ))}
         </div>
       )}

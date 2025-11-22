@@ -29,7 +29,7 @@ export interface SearchResult {
 
 export interface DownloadRequest {
   service: string;
-  content_id: string;
+  title_id: string;  // The full URL for unshackle serve API
   quality?: '720p' | '1080p' | '4k';
   output_path?: string;
   hdr10?: boolean;
@@ -40,10 +40,10 @@ export interface DownloadRequest {
 }
 
 export interface DownloadJob {
-  id: string;
+  job_id: string;  // API uses job_id, not id
   service: string;
-  content_id: string;
-  content_title: string;
+  title_id: string;  // The full URL for unshackle serve API
+  content_title?: string;  // May not be provided by API
   status: 'queued' | 'downloading' | 'completed' | 'failed';
   progress?: number;
   current_file?: string;
@@ -51,7 +51,26 @@ export interface DownloadJob {
   downloaded_bytes?: number;
   total_bytes?: number;
   error?: string;
-  start_time: string;
+  
+  // API provides these timestamps
+  created_time: string;
+  started_time?: string;
+  completed_time?: string;
+  
+  // Error details from API
+  error_message?: string;
+  error_details?: string;
+  error_code?: string;
+  error_traceback?: string;
+  worker_stderr?: string;
+  
+  // Parameters and output files
+  parameters?: Record<string, any>;
+  output_files?: string[];
+
+  // Legacy fields for backward compatibility
+  id?: string;
+  start_time?: string;
   end_time?: string;
 }
 
@@ -278,7 +297,7 @@ export function isConnectionConfirmedEvent(event: WebSocketEvent): event is WebS
 
 // UI State Types
 export type Theme = 'dark' | 'light' | 'system';
-export type TabId = 'search' | 'queue' | 'history' | 'services';
+export type TabId = 'search' | 'download' | 'queue' | 'history' | 'services';
 
 export interface ConnectionStatus {
   unshackle: 'connected' | 'disconnected' | 'error';
