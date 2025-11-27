@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Save, RotateCcw, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useSettingsStore } from '@/stores/settings-store';
 import { getAPIConfig, validateAPIConfig } from '@/lib/api/api-config';
+import { apiClientManager } from '@/lib/api/api-client-manager';
 import { toast } from 'sonner';
 
 export function SettingsPage() {
@@ -25,7 +26,7 @@ export function SettingsPage() {
   const hasEnvUnshackleKey = !!import.meta.env.VITE_UNSHACKLE_API_KEY;
   const hasEnvTMDBKey = !!import.meta.env.VITE_TMDB_API_KEY;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Update config
     updateUnshackleConfig({
       baseURL: unshackleURL,
@@ -39,9 +40,12 @@ export function SettingsPage() {
     const newConfig = getEffectiveConfig();
     const validation = validateAPIConfig(newConfig);
 
+    // Update API client manager with new config
+    apiClientManager.updateConfig(newConfig);
+
     if (validation.isValid) {
       toast.success('Settings Saved', {
-        description: 'API configuration has been updated successfully.',
+        description: 'API configuration has been updated. Clients will reconnect.',
       });
     } else {
       toast.error('Settings Saved with Warnings', {
@@ -50,12 +54,15 @@ export function SettingsPage() {
     }
   };
 
-  const handleReset = () => {
+  const handleReset = async () => {
     resetToDefaults();
     const defaultConfig = getAPIConfig();
     setUnshackleURL(defaultConfig.unshackle.baseURL);
     setUnshackleKey(defaultConfig.unshackle.apiKey);
     setTMDBKey(defaultConfig.tmdb.apiKey);
+    
+    // Update API client manager with default config
+    apiClientManager.updateConfig(defaultConfig);
     
     toast.success('Settings Reset', {
       description: 'Configuration has been reset to environment defaults.',

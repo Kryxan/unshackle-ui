@@ -33,7 +33,8 @@ export const defaultAPIConfig: APIConfig = {
 };
 
 export function getAPIConfig(): APIConfig {
-  return {
+  // Get config from environment variables first
+  const envConfig: APIConfig = {
     unshackle: {
       baseURL: import.meta.env.VITE_UNSHACKLE_API_URL || defaultAPIConfig.unshackle.baseURL,
       apiKey: import.meta.env.VITE_UNSHACKLE_API_KEY || defaultAPIConfig.unshackle.apiKey,
@@ -49,6 +50,33 @@ export function getAPIConfig(): APIConfig {
       cacheTTL: parseInt(import.meta.env.VITE_TMDB_CACHE_TTL) || defaultAPIConfig.tmdb.cacheTTL,
     },
   };
+
+  // Try to get runtime config from localStorage
+  try {
+    const stored = localStorage.getItem('unshackle-settings-store');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed.state?.apiConfig) {
+        const runtimeConfig = parsed.state.apiConfig;
+        
+        // Merge runtime config with env config, preferring runtime values
+        return {
+          unshackle: {
+            ...envConfig.unshackle,
+            ...(runtimeConfig.unshackle || {}),
+          },
+          tmdb: {
+            ...envConfig.tmdb,
+            ...(runtimeConfig.tmdb || {}),
+          },
+        };
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to load runtime config from localStorage:', error);
+  }
+
+  return envConfig;
 }
 
 export function validateAPIConfig(config: APIConfig): { isValid: boolean; errors: string[] } {
