@@ -169,10 +169,11 @@ export function WebSocketProvider({
             
             // If the connection confirmation includes job status, process it immediately
             if (message.data.status) {
+              const statusValue = message.data.status as 'queued' | 'downloading' | 'completed' | 'failed';
               const initialJobStatus = {
                 id: confirmedJobId,
                 job_id: confirmedJobId,
-                status: message.data.status,
+                status: statusValue,
                 progress: message.data.progress,
                 current_file: message.data.current_file,
                 total_files: message.data.files_total || message.data.total_files,
@@ -412,7 +413,7 @@ export function WebSocketProvider({
     });
     
     try {
-      const globalURL = getGlobalWebSocketURL(unshackleClient.baseURL, unshackleClient.getApiKey());
+      const globalURL = getGlobalWebSocketURL(unshackleClient.getBaseURL(), unshackleClient.getApiKey());
       setCurrentWebSocketURL(globalURL);
       // The useWebSocket hook will handle the connection when URL changes
     } catch (error) {
@@ -441,7 +442,7 @@ export function WebSocketProvider({
     });
     
     try {
-      const jobURL = getJobWebSocketURL(unshackleClient.baseURL, jobId, unshackleClient.getApiKey());
+      const jobURL = getJobWebSocketURL(unshackleClient.getBaseURL(), jobId, unshackleClient.getApiKey());
       setCurrentWebSocketURL(jobURL);
       // The useWebSocket hook will handle the connection when URL changes
     } catch (error) {

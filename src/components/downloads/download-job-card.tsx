@@ -1,4 +1,4 @@
-import { Download, Clock, CheckCircle, XCircle, X, FolderOpen, RotateCcw, Film, Music, Monitor } from 'lucide-react';
+import { Download, Clock, CheckCircle, XCircle, X, FolderOpen, RotateCcw, Monitor } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -22,9 +22,6 @@ export function DownloadJobCard({ job, variant, className }: DownloadJobCardProp
   // Extract title_id from job
   const titleId = job.title_id;
   const service = job.service;
-  
-  // Use job_id or id for compatibility
-  const jobId = job.job_id || job.id;
   
   // Fetch title and track information
   const { data: titleInfo } = useTitleInfo(service, titleId);
@@ -154,16 +151,20 @@ export function DownloadJobCard({ job, variant, className }: DownloadJobCardProp
   };
   
   const handleCancel = async () => {
+    const id = job.job_id || job.id;
+    if (!id) return;
     try {
-      await cancelJobMutation.mutateAsync(job.id);
-      cancelJob(job.id);
+      await cancelJobMutation.mutateAsync(id);
+      cancelJob(id);
     } catch (error) {
       console.error('Failed to cancel job:', error);
     }
   };
 
   const handleRetry = () => {
-    retryFailedJob(job.id);
+    const id = job.job_id || job.id;
+    if (!id) return;
+    retryFailedJob(id);
   };
   
   const handleOpenFolder = () => {

@@ -8,20 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Download, AlertCircle, CheckCircle, Globe, Info } from 'lucide-react';
 import { useServices } from '@/lib/api/queries';
 import { useStartDownload } from '@/lib/api/queries';
-// ServiceInfo type not used
-
-// API Service interface matches what we actually get from /api/services
-interface APIService {
-  tag: string;
-  aliases: string[];
-  geofence: string[];
-  title_regex: string | null;
-  url: string;
-  help: string;
-}
+import type { ServiceInfo } from '@/lib/types';
 
 interface DetectedService {
-  service: APIService;
+  service: ServiceInfo;
   matches: boolean;
   confidence: 'high' | 'medium' | 'low' | 'manual';
 }
@@ -30,7 +20,7 @@ export function DownloadPage() {
   const [url, setUrl] = useState('');
   const [isDetecting, setIsDetecting] = useState(false);
   const [detectedServices, setDetectedServices] = useState<DetectedService[]>([]);
-  const [selectedService, setSelectedService] = useState<APIService | null>(null);
+  const [selectedService, setSelectedService] = useState<ServiceInfo | null>(null);
   const [downloadStatus, setDownloadStatus] = useState<'idle' | 'starting' | 'queued' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -38,7 +28,7 @@ export function DownloadPage() {
   const startDownloadMutation = useStartDownload();
 
   // servicesData is now directly the array of services (after API response format fix)
-  const services = (servicesData as APIService[]) || [];
+  const services = (servicesData as ServiceInfo[]) || [];
 
   const detectServices = async () => {
     if (!url.trim() || services.length === 0) return;
@@ -290,6 +280,7 @@ export function DownloadPage() {
             <div>
               <label className="block text-sm font-medium mb-2">Select Service:</label>
               <select 
+                aria-label="Select streaming service"
                 className="w-full p-2 border border-gray-300 rounded-md"
                 onChange={(e) => {
                   const selectedTag = e.target.value;

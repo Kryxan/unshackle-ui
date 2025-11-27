@@ -49,11 +49,11 @@ export function useDownloadWebSocket(): UseDownloadWebSocketReturn {
     isConnected,
     isPolling: pollingFallback.isPolling,
     pollingInterval: pollingFallback.currentInterval,
-    lastPollingSuccess: pollingFallback.lastSuccess,
+    lastPollingSuccess: pollingFallback.lastSuccess ? new Date(pollingFallback.lastSuccess) : null,
     // Enhanced polling status information
     pollingReason: pollingFallback.pollingReason,
-    isPollingForAuthFailure: pollingFallback.isActiveForAuthFailure,
-    isPollingForDisconnection: pollingFallback.isActiveForDisconnection,
+    isPollingForAuthFailure: pollingFallback.isActiveForAuthFailure ?? false,
+    isPollingForDisconnection: pollingFallback.isActiveForDisconnection ?? false,
     connectionState: pollingFallback.connectionState,
   };
 }

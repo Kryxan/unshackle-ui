@@ -100,7 +100,10 @@ class StoreManagerImpl implements StoreManager {
     // Limit download job history
     const downloadsStore = useDownloadsStore.getState();
     const oldJobs = downloadsStore.completedJobs.filter(
-      job => Date.now() - new Date(job.end_time || job.start_time).getTime() > 7 * 24 * 60 * 60 * 1000 // 7 days
+      job => {
+        const timestamp = job.end_time || job.start_time;
+        return timestamp ? Date.now() - new Date(timestamp).getTime() > 7 * 24 * 60 * 60 * 1000 : false; // 7 days
+      }
     );
     
     if (oldJobs.length > 0) {

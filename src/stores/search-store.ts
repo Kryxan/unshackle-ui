@@ -96,7 +96,7 @@ export const useSearchStore = create<SearchState>()(
         tmdbError: null,
         selectedTitle: null,
 
-        selectedServices: ['NF', 'DSNP'], // Default to Netflix and Disney+
+        selectedServices: [], // Will be populated from discovered services at runtime
         serviceSearchResults: {},
         serviceSearchLoading: {},
         serviceSearchErrors: {},

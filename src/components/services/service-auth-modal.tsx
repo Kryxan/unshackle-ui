@@ -32,7 +32,7 @@ export function ServiceAuthModal({ service, isOpen, onClose }: ServiceAuthModalP
     
     try {
       await authenticateServiceMutation.mutateAsync({
-        service_id: service.id,
+        service_id: service.id || service.tag,
         credentials,
       });
       setCredentials({});
@@ -46,7 +46,7 @@ export function ServiceAuthModal({ service, isOpen, onClose }: ServiceAuthModalP
     if (!service) return;
     
     try {
-      await logoutServiceMutation.mutateAsync(service.id);
+      await logoutServiceMutation.mutateAsync(service.id || service.tag);
       onClose();
     } catch (error) {
       // Error handled by the mutation's onError

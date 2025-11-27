@@ -68,13 +68,13 @@ export function ServiceCard({ service, onConfigureClick, onAuthClick }: ServiceC
   };
 
   const handleTestService = async () => {
-    testServiceMutation.mutate(service.id);
+    testServiceMutation.mutate(service.id || service.tag);
   };
 
   const handleToggleService = async (enabled: boolean) => {
     setIsToggling(true);
     try {
-      await toggleServiceMutation.mutateAsync({ serviceId: service.id, enabled });
+      await toggleServiceMutation.mutateAsync({ serviceId: service.id || service.tag, enabled });
     } finally {
       setIsToggling(false);
     }

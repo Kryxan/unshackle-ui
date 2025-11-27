@@ -130,32 +130,35 @@ export function ServiceSearchStep({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {services
-              .filter(service => service.config?.enabled !== false)
-              .map((service) => (
+            {services.map((service) => {
+              const serviceId = service.tag || service.id || '';
+              const serviceName = service.aliases?.[0] || service.name || service.tag || 'Unknown Service';
+              
+              return (
                 <div
-                  key={service.id}
+                  key={serviceId}
                   className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer"
-                  onClick={() => handleServiceToggle(service.id, !selectedServices.includes(service.id))}
+                  onClick={() => handleServiceToggle(serviceId, !selectedServices.includes(serviceId))}
                 >
                   <Checkbox
-                    id={service.id}
-                    checked={selectedServices.includes(service.id)}
-                    onCheckedChange={(checked) => handleServiceToggle(service.id, checked as boolean)}
+                    id={serviceId}
+                    checked={selectedServices.includes(serviceId)}
+                    onCheckedChange={(checked) => handleServiceToggle(serviceId, checked as boolean)}
                   />
                   <div className="flex-1 min-w-0">
-                    <label htmlFor={service.id} className="font-medium cursor-pointer">
-                      {service.name}
+                    <label htmlFor={serviceId} className="font-medium cursor-pointer">
+                      {serviceName}
                     </label>
                     <p className="text-xs text-muted-foreground font-mono">
-                      {service.id}
+                      {serviceId}
                     </p>
                   </div>
                 </div>
-              ))}
+              );
+            })}
           </div>
 
-          {services.filter(service => service.config?.enabled !== false).length === 0 && (
+          {services.length === 0 && (
             <div className="text-center py-8">
               <p className="text-muted-foreground">No streaming services available</p>
               <p className="text-sm text-muted-foreground">Check your service configuration</p>

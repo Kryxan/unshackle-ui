@@ -189,8 +189,8 @@ export const useDownloadsStore = create<DownloadsState>()(
         selectAll: (status) => {
           const { jobs } = get();
           const jobIds = status 
-            ? jobs.filter(job => job.status === status).map(job => job.id)
-            : jobs.map(job => job.id);
+            ? jobs.filter(job => job.status === status).map(job => job.job_id || job.id).filter((id): id is string => id !== undefined)
+            : jobs.map(job => job.job_id || job.id).filter((id): id is string => id !== undefined);
           set({ selectedJobIds: jobIds });
         },
 
@@ -275,7 +275,7 @@ export const useDownloadsStore = create<DownloadsState>()(
             }
             
             // Date range filter
-            if (filters.dateRange) {
+            if (filters.dateRange && job.start_time) {
               const jobDate = new Date(job.start_time);
               if (jobDate < filters.dateRange.start || jobDate > filters.dateRange.end) {
                 return false;
@@ -294,10 +294,10 @@ export const useDownloadsStore = create<DownloadsState>()(
             
             switch (sortBy) {
               case 'date':
-                comparison = new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
+                comparison = (a.start_time ? new Date(a.start_time).getTime() : 0) - (b.start_time ? new Date(b.start_time).getTime() : 0);
                 break;
               case 'title':
-                comparison = a.content_title.localeCompare(b.content_title);
+                comparison = (a.content_title || '').localeCompare(b.content_title || '');
                 break;
               case 'service':
                 comparison = a.service.localeCompare(b.service);

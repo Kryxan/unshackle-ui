@@ -38,7 +38,7 @@ export function QueuePage() {
         <div className="flex items-center space-x-2">
           {/* Enhanced real-time update status with polling mode display */}
           <div className="flex items-center space-x-2">
-            <ConnectionStatusIndicator showDetails showPollingMode />
+            <ConnectionStatusIndicator showDetails />
             
             {/* Additional mode indicators */}
             {isConnected && !isPolling && (

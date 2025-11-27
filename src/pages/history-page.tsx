@@ -1,7 +1,6 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Calendar, FileDown, CheckCircle, XCircle, Trash2 } from 'lucide-react';
+import { Loader2, FileDown, XCircle, Trash2 } from 'lucide-react';
 import { useJobs } from '@/lib/api/queries';
 import { useDownloadsStore } from '@/stores/downloads-store';
 import { DownloadJobCard } from '@/components/downloads/download-job-card';
@@ -18,42 +17,6 @@ export function HistoryPage() {
     const bTime = b.completed_time || b.started_time || b.created_time || b.start_time || '';
     return new Date(bTime).getTime() - new Date(aTime).getTime();
   });
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'failed':
-        return <XCircle className="h-4 w-4 text-red-500" />;
-      default:
-        return <FileDown className="h-4 w-4" />;
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <Badge variant="secondary" className="bg-green-100 text-green-800">Completed</Badge>;
-      case 'failed':
-        return <Badge variant="destructive">Failed</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-
-  const formatDate = (dateStr: string) => {
-    try {
-      return new Date(dateStr).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch {
-      return dateStr;
-    }
-  };
 
   return (
     <div className="space-y-6">

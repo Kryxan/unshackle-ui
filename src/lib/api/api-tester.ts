@@ -63,7 +63,7 @@ export class APITester {
       if (services.length > 0) {
         tests.push(await this.runTest('unshackle', 'POST /api/search', async () => {
           return await client.search({
-            service: services[0].id,
+            service: services[0].id || services[0].tag,
             query: 'test',
             type: 'movie',
           });

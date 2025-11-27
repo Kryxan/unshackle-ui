@@ -28,6 +28,10 @@ export class UnshackleAPIClient {
     return this.apiKey;
   }
 
+  getBaseURL(): string {
+    return this.baseURL;
+  }
+
   private getHeaders(): Record<string, string> {
     return {
       'Content-Type': 'application/json',

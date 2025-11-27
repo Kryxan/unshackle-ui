@@ -62,7 +62,7 @@ export function DownloadQueue({ className }: DownloadQueueProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => bulkRetry(failedJobs.map(j => j.id))}
+                    onClick={() => bulkRetry(failedJobs.map(j => j.job_id || j.id).filter((id): id is string => id !== undefined))}
                   >
                     <RotateCcw className="h-4 w-4 mr-2" />
                     Retry All Failed
@@ -147,7 +147,7 @@ export function DownloadQueue({ className }: DownloadQueueProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => bulkRetry(failedJobs.map(j => j.id))}
+              onClick={() => bulkRetry(failedJobs.map(j => j.job_id || j.id).filter((id): id is string => id !== undefined))}
             >
               <RotateCcw className="h-4 w-4 mr-2" />
               Retry All
@@ -155,7 +155,7 @@ export function DownloadQueue({ className }: DownloadQueueProps) {
           </div>
           <div className="space-y-2">
             {failedJobs.map((job) => (
-              <DownloadJobCard key={job.id} job={job} variant="failed" />
+              <DownloadJobCard key={job.job_id || job.id} job={job} variant="failed" />
             ))}
           </div>
         </section>

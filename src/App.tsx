@@ -6,6 +6,7 @@ import { QueuePage } from '@/pages/queue-page';
 import { HistoryPage } from '@/pages/history-page';
 import { ServicesPage } from '@/pages/services-page';
 import { DownloadPage } from '@/pages/download-page';
+import { SettingsPage } from '@/pages/settings-page';
 import { WebSocketProvider } from '@/contexts/websocket-context';
 import { useUIStore } from '@/stores';
 import { queryClient } from '@/lib/api/query-client';
@@ -30,6 +31,8 @@ function AppContent() {
         return <HistoryPage />;
       case 'services':
         return <ServicesPage />;
+      case 'settings':
+        return <SettingsPage />;
       default:
         return <DownloadPage />;
     }

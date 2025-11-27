@@ -74,14 +74,25 @@ export interface DownloadJob {
   end_time?: string;
 }
 
+// ServiceInfo type now matches the actual unshackle serve API response
+// Includes both new API properties and legacy properties for backward compatibility with unused components
 export interface ServiceInfo {
-  id: string;
-  name: string;
-  status: 'available';  // If API reports it, it's available
-  description?: string;
-  requires_auth: boolean;
-  auth_status?: 'authenticated' | 'unauthenticated' | 'expired';
-  config?: ServiceConfig;
+  // New API properties (unshackle serve)
+  tag: string;  // Service identifier
+  url: string;  // Service URL
+  aliases: string[];  // Alternative names
+  geofence: string[];  // Geographic restrictions
+  title_regex: string | string[] | null;  // URL pattern matching
+  help: string;  // Service help text
+  
+  // Legacy properties (for backward compatibility with unused components)
+  id?: string;  // Legacy: use tag instead
+  name?: string;  // Legacy: use tag instead
+  status?: 'available' | 'error';  // Legacy: not used in new API
+  description?: string;  // Legacy: use help instead
+  requires_auth?: boolean;  // Legacy: not used in new API
+  auth_status?: 'authenticated' | 'unauthenticated' | 'expired';  // Legacy: not used in new API
+  config?: ServiceConfig;  // Legacy: not used in new API
 }
 
 export interface ServiceConfig {
@@ -297,7 +308,7 @@ export function isConnectionConfirmedEvent(event: WebSocketEvent): event is WebS
 
 // UI State Types
 export type Theme = 'dark' | 'light' | 'system';
-export type TabId = 'search' | 'download' | 'queue' | 'history' | 'services';
+export type TabId = 'search' | 'download' | 'queue' | 'history' | 'services' | 'settings';
 
 export interface ConnectionStatus {
   unshackle: 'connected' | 'disconnected' | 'error';

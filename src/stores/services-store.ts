@@ -109,7 +109,7 @@ export const useServicesStore = create<ServicesState>()(
         healthChecks: {},
         authStatus: {},
 
-        preferredServices: ['NF', 'DSNP', 'AMZN'], // Default preferred services
+        preferredServices: [], // Will be populated from discovered services at runtime
         hiddenServices: [],
 
         // New state
@@ -192,7 +192,7 @@ export const useServicesStore = create<ServicesState>()(
     getAvailableServices: () => {
       const { services, hiddenServices } = get();
       return services.filter(service => 
-        service.status === 'available' && !hiddenServices.includes(service.id)
+        service.status === 'available' && !hiddenServices.includes(service.id || service.tag)
       );
     },
 

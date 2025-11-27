@@ -82,7 +82,7 @@ export function WebSocketStatus({
   if (compact) {
     return (
       <div className="flex items-center space-x-2">
-        <ConnectionStatusIndicator showPollingMode />
+        <ConnectionStatusIndicator />
         {reconnectAttempts > 0 && (
           <Badge variant="secondary" className="text-xs">
             Retry {reconnectAttempts}
@@ -121,7 +121,7 @@ export function WebSocketStatus({
                 : "No updates available"}
             </CardDescription>
           </div>
-          <ConnectionStatusIndicator showPollingMode />
+          <ConnectionStatusIndicator />
         </div>
       </CardHeader>
       <CardContent className="pt-0">
@@ -169,12 +169,12 @@ export function WebSocketStatus({
             )}
           </div>
 
-          {/* Polling reason display */}
-          {isPolling && pollingReason !== "not_needed" && (
+          {/* Polling status display */}
+          {isPolling && isPollingForAuthFailure && (
             <div className="flex items-center space-x-2">
               <Clock className="h-4 w-4 text-blue-500" />
               <span className="text-sm text-muted-foreground">
-                Polling reason: {pollingReason.replace("_", " ")}
+                Polling due to authentication failure
               </span>
             </div>
           )}

@@ -1,81 +1,185 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Info, Download, ArrowRight } from 'lucide-react';
-import { useUIStore } from '@/stores';
+import { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { SimpleSearchHero } from '@/components/search/simple-search-hero';
+import { TMDBSelectionGrid, ServiceSearchStep, ContentGrid } from '@/components/search';
+import { DownloadOptionsModal } from '@/components/downloads/download-options-modal';
+import { useServices } from '@/lib/api/queries';
+import { useTwoStepSearch } from '@/hooks/use-two-step-search';
+import type { EnhancedSearchResult, DownloadOptions } from '@/lib/types';
 
 export function SearchPage() {
-  const { setActiveTab } = useUIStore();
+  const [selectedResult, setSelectedResult] = useState<EnhancedSearchResult | null>(null);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
 
-  const handleGoToDownload = () => {
-    setActiveTab('download');
+  // Load services
+  const { data: services = [] } = useServices();
+
+  // Two-step search workflow
+  const {
+    searchState,
+    tmdbResults,
+    tmdbLoading,
+    tmdbError,
+    serviceResults,
+    serviceLoading,
+    startSearch,
+    selectTMDBResult,
+    searchServices,
+    resetSearch,
+    backToTMDBSelection,
+    retryTMDBSearch,
+  } = useTwoStepSearch();
+
+  const handleDownload = (result: EnhancedSearchResult) => {
+    setSelectedResult(result);
+    setShowDownloadModal(true);
+  };
+
+  const handleDownloadSubmit = async (options: DownloadOptions) => {
+    if (!selectedResult) return;
+    
+    // TODO: Implement download functionality
+    console.log('Download:', selectedResult, options);
+    setShowDownloadModal(false);
+    setSelectedResult(null);
+  };
+
+  const renderCurrentStep = () => {
+    switch (searchState.step) {
+      case 'initial':
+        return (
+          <SimpleSearchHero
+            onSearch={startSearch}
+            isLoading={false}
+            disabled={false}
+            placeholder="Search for movies and TV shows..."
+          />
+        );
+
+      case 'tmdb_selection':
+        return (
+          <div className="space-y-6">
+            <SimpleSearchHero
+              onSearch={startSearch}
+              isLoading={tmdbLoading}
+              disabled={false}
+              placeholder="Search for movies and TV shows..."
+              defaultValue={searchState.tmdbQuery}
+            />
+            
+            <TMDBSelectionGrid
+              results={tmdbResults}
+              isLoading={tmdbLoading}
+              onSelect={selectTMDBResult}
+              onRetry={retryTMDBSearch}
+            />
+          </div>
+        );
+
+      case 'service_search':
+        return (
+          <ServiceSearchStep
+            selectedContent={searchState.selectedTMDBResult!}
+            services={services}
+            onSearch={searchServices}
+            onBack={backToTMDBSelection}
+            isLoading={serviceLoading}
+          />
+        );
+
+      case 'completed':
+        // Convert service results to enhanced results for display
+        const enhancedResults: EnhancedSearchResult[] = serviceResults.map(result => ({
+          unshackleResult: result,
+          tmdbData: searchState.selectedTMDBResult!,
+          displayTitle: result.title,
+          displayYear: searchState.selectedTMDBResult?.release_date || searchState.selectedTMDBResult?.first_air_date 
+            ? new Date(searchState.selectedTMDBResult.release_date || searchState.selectedTMDBResult.first_air_date!).getFullYear().toString()
+            : '',
+          posterURL: searchState.selectedTMDBResult?.poster_path
+            ? `https://image.tmdb.org/t/p/w500${searchState.selectedTMDBResult.poster_path}`
+            : undefined,
+          description: searchState.selectedTMDBResult?.overview,
+          rating: searchState.selectedTMDBResult?.vote_average,
+          genres: [], // Could map from TMDB genre_ids if needed
+        }));
+
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-semibold">
+                Search Results for "{searchState.selectedTMDBResult?.title || searchState.selectedTMDBResult?.name}"
+              </h2>
+              <button
+                onClick={resetSearch}
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                Start New Search
+              </button>
+            </div>
+
+            {enhancedResults.length > 0 ? (
+              <ContentGrid
+                results={enhancedResults}
+                viewMode="grid"
+                onDownload={handleDownload}
+              />
+            ) : (
+              <Card>
+                <CardContent className="flex items-center justify-center py-12">
+                  <div className="text-center space-y-2">
+                    <p className="text-lg font-medium">No Results Found</p>
+                    <p className="text-muted-foreground">
+                      "{searchState.selectedTMDBResult?.title || searchState.selectedTMDBResult?.name}" 
+                      was not found on the selected streaming services.
+                    </p>
+                    <button
+                      onClick={resetSearch}
+                      className="text-sm text-primary hover:underline"
+                    >
+                      Try a different search
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        );
+
+      default:
+        return null;
+    }
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Content Search</h1>
-          <p className="text-muted-foreground mt-1">
-            Search functionality for streaming services
-          </p>
-        </div>
+    <div className="space-y-6">
+      {renderCurrentStep()}
 
+      {tmdbError && searchState.step === 'tmdb_selection' && (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Info className="h-5 w-5 text-blue-500" />
-              Search Not Available
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-blue-800 mb-3">
-                The search functionality is not available through the unshackle serve API. 
-                This feature would require additional API endpoints that are not currently provided.
+          <CardContent className="flex items-center justify-center py-12">
+            <div className="text-center space-y-2">
+              <p className="text-lg font-medium text-red-600">Search Error</p>
+              <p className="text-muted-foreground">
+                Unable to search TMDB. Please try again.
               </p>
-              
-              <div className="space-y-2 text-sm text-blue-700">
-                <p><strong>Alternative approach:</strong></p>
-                <ul className="list-disc list-inside space-y-1 ml-4">
-                  <li>Use the <strong>Download</strong> page to enter direct URLs</li>
-                  <li>The download page can detect supported services (TUBI, ROKU, etc.)</li>
-                  <li>Browse content directly on streaming service websites</li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="flex justify-center">
-              <Button onClick={handleGoToDownload} className="flex items-center gap-2">
-                <Download className="h-4 w-4" />
-                Go to Download Page
-                <ArrowRight className="h-4 w-4" />
-              </Button>
             </div>
           </CardContent>
         </Card>
+      )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Supported Services</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-3">
-              The following services are available for direct URL downloads:
-            </p>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 text-sm">
-              <div className="p-2 bg-gray-50 rounded">TUBI</div>
-              <div className="p-2 bg-gray-50 rounded">ROKU</div>
-              <div className="p-2 bg-gray-50 rounded">Netflix (NF)</div>
-              <div className="p-2 bg-gray-50 rounded">Disney+ (DSNP)</div>
-              <div className="p-2 bg-gray-50 rounded">MAX</div>
-              <div className="p-2 bg-gray-50 rounded">Pluto TV</div>
-              <div className="text-sm text-muted-foreground p-2">
-                ...and many more
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {selectedResult && (
+        <DownloadOptionsModal
+          isOpen={showDownloadModal}
+          onClose={() => {
+            setShowDownloadModal(false);
+            setSelectedResult(null);
+          }}
+          onConfirm={handleDownloadSubmit}
+          result={selectedResult}
+          isLoading={false}
+        />
+      )}
     </div>
   );
 }

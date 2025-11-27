@@ -36,9 +36,9 @@ export function ServiceSelector({
           services.map((service) => (
             <Button
               key={service.id}
-              variant={selected.includes(service.id) ? "default" : "outline"}
+              variant={selected.includes(service.id || service.tag) ? "default" : "outline"}
               size="sm"
-              onClick={() => onToggle(service.id)}
+              onClick={() => onToggle(service.id || service.tag)}
               className="relative"
               title={service.description || service.name}
             >

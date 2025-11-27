@@ -40,7 +40,7 @@ export function ServiceConfigModal({ service, isOpen, onClose }: ServiceConfigMo
     
     try {
       await updateConfigMutation.mutateAsync({
-        service_id: service.id,
+        service_id: service.id || service.tag,
         config,
       });
       onClose();
@@ -155,8 +155,8 @@ export function ServiceConfigModal({ service, isOpen, onClose }: ServiceConfigMo
               </div>
             </div>
 
-            {/* Service-specific Settings */}
-            {service.id === 'NF' && (
+            {/* Service-specific Settings - dynamically based on service.tag or service.id */}
+            {(service.id === 'NF' || service.tag === 'NF') && (
               <div className="space-y-4">
                 <h4 className="text-sm font-medium">Netflix Settings</h4>
                 
@@ -179,7 +179,7 @@ export function ServiceConfigModal({ service, isOpen, onClose }: ServiceConfigMo
               </div>
             )}
 
-            {service.id === 'DSNP' && (
+            {(service.id === 'DSNP' || service.tag === 'DSNP') && (
               <div className="space-y-4">
                 <h4 className="text-sm font-medium">Disney+ Settings</h4>
                 
