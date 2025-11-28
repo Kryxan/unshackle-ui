@@ -1,4 +1,4 @@
-import { Search, Download, History, Settings, Plus, Cloud } from "lucide-react";
+import { Search, Download, History, Settings, Plus, Cloud, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores";
@@ -13,6 +13,7 @@ const navigationTabs = [
   { id: 'queue', label: 'Queue', icon: Download },
   { id: 'history', label: 'History', icon: History },
   { id: 'services', label: 'Services', icon: Cloud },
+  { id: 'terminal', label: 'Terminal', icon: Terminal },
   { id: 'settings', label: 'Settings', icon: Settings },
 ] as const;
 

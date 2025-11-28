@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Interactive Terminal Page**: Full-featured bash shell with WebSocket connection
+  - Real-time terminal emulation using xterm.js
+  - WebSocket connection to `/api/terminal` for actual shell execution
+  - Theme-aware terminal colors (automatic dark/light mode switching)
+  - GRC (Generic Colouriser) color support for command output
+  - Automatic .bashrc loading on connection
+  - Full-height terminal with minimal padding and no UI chrome
+  - ResizeObserver for dynamic terminal fitting to viewport
+  - Terminal navigation tab with Terminal icon
 - **Runtime Settings Page**: Configure API endpoints and keys at runtime without rebuilding
   - Unshackle API base URL configuration
   - Unshackle API key management with show/hide toggle

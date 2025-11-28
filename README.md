@@ -1,6 +1,11 @@
 # my updates
 there are still significant issues with this UI, however I upgraded it from the official repository and added functionality. the backend still needs updates. I had to make some changes to the backend, but due to unforeseen consequences I abandoned those and am not including them. the original UI required websockets, but as that's not implemented in the backend, alternative methods were used. due to the omitted changes I made to the backend, I cannot guarantee this works.
 
+**New in this fork:**
+- Interactive terminal page with WebSocket connection (requires `/api/terminal` endpoint in unshackle serve)
+- Runtime API configuration without rebuilding
+- Theme-aware terminal colors with GRC support
+
 
 # Unshackle UI
 
@@ -24,6 +29,7 @@ Unshackle UI provides a modern, responsive web interface for managing your Unsha
 - 🔍 **TMDB-Enhanced Search** - Rich content discovery with posters and metadata
 - 🌐 **Multi-Service Support** - Search across multiple streaming services simultaneously
 - 📥 **Real-time Downloads** - Live progress tracking and queue management
+- 💻 **Interactive Terminal** - Full bash shell with GRC color support and theme awareness
 - 🎨 **Modern Design** - Clean, responsive interface inspired by PortraTracker
 - 🌙 **Dark/Light Mode** - Adaptive theming for any environment
 - 🔔 **Smart Notifications** - Toast alerts for download status and completion

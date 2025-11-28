@@ -6,6 +6,7 @@ import { QueuePage } from '@/pages/queue-page';
 import { HistoryPage } from '@/pages/history-page';
 import { ServicesPage } from '@/pages/services-page';
 import { DownloadPage } from '@/pages/download-page';
+import { TerminalPage } from '@/pages/terminal-page';
 import { SettingsPage } from '@/pages/settings-page';
 import { WebSocketProvider } from '@/contexts/websocket-context';
 import { useUIStore } from '@/stores';
@@ -31,6 +32,8 @@ function AppContent() {
         return <HistoryPage />;
       case 'services':
         return <ServicesPage />;
+      case 'terminal':
+        return <TerminalPage />;
       case 'settings':
         return <SettingsPage />;
       default:

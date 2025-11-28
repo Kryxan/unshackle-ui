@@ -308,7 +308,7 @@ export function isConnectionConfirmedEvent(event: WebSocketEvent): event is WebS
 
 // UI State Types
 export type Theme = 'dark' | 'light' | 'system';
-export type TabId = 'search' | 'download' | 'queue' | 'history' | 'services' | 'settings';
+export type TabId = 'search' | 'download' | 'queue' | 'history' | 'services' | 'terminal' | 'settings';
 
 export interface ConnectionStatus {
   unshackle: 'connected' | 'disconnected' | 'error';

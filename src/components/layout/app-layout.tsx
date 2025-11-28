@@ -25,7 +25,7 @@ export function AppLayout({ children, className }: AppLayoutProps) {
           {/* Status Bar */}
           <div className="mt-auto p-4 border-t border-sidebar-border">
             <div className="text-xs text-sidebar-foreground space-y-1">
-              <div>Unshackle UI v1.0.0</div>
+              <div>Unshackle UI v0.3.0</div>
               <div className="text-sidebar-accent-foreground">Ready</div>
             </div>
           </div>
