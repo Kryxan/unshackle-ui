@@ -766,24 +766,66 @@ def setup_swagger(app: web.Application) -> None:
 async def terminal_websocket(request: web.Request) -> web.WebSocketResponse:
     """
     Interactive terminal WebSocket endpoint.
-    Provides a bash shell with PTY support.
+    Provides a persistent bash shell using tmux.
+    Sessions survive disconnections so commands continue running.
     """
     ws = web.WebSocketResponse()
     await ws.prepare(request)
     
     log.info("Terminal WebSocket connection established")
     
+    # Use a single persistent tmux session
+    session_name = "unshackle-terminal"
+    
+    # Check if tmux session exists, create if not
+    try:
+        check_process = await asyncio.create_subprocess_exec(
+            'tmux', 'has-session', '-t', session_name,
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.DEVNULL
+        )
+        await check_process.wait()
+        session_exists = check_process.returncode == 0
+    except FileNotFoundError:
+        # tmux not installed, fall back to direct bash
+        log.warning("tmux not found, sessions won't persist. Install tmux for persistent terminals.")
+        session_exists = False
+        session_name = None
+    
     # Create PTY
     master_fd, slave_fd = pty.openpty()
     
-    # Start bash with login shell (loads .bashrc)
-    process = await asyncio.create_subprocess_exec(
-        '/bin/bash', '-l',  # -l flag loads .bashrc
-        stdin=slave_fd,
-        stdout=slave_fd,
-        stderr=slave_fd,
-        preexec_fn=os.setsid
-    )
+    # Start bash or attach to tmux session
+    if session_name and session_exists:
+        # Attach to existing session
+        log.info(f"Attaching to existing tmux session: {session_name}")
+        process = await asyncio.create_subprocess_exec(
+            'tmux', 'attach-session', '-t', session_name,
+            stdin=slave_fd,
+            stdout=slave_fd,
+            stderr=slave_fd,
+            preexec_fn=os.setsid
+        )
+    elif session_name:
+        # Create new tmux session
+        log.info(f"Creating new tmux session: {session_name}")
+        process = await asyncio.create_subprocess_exec(
+            'tmux', 'new-session', '-s', session_name, '/bin/bash', '-l',
+            stdin=slave_fd,
+            stdout=slave_fd,
+            stderr=slave_fd,
+            preexec_fn=os.setsid
+        )
+    else:
+        # Fallback to direct bash (no persistence)
+        log.info("Starting bash without tmux (no persistence)")
+        process = await asyncio.create_subprocess_exec(
+            '/bin/bash', '-l',
+            stdin=slave_fd,
+            stdout=slave_fd,
+            stderr=slave_fd,
+            preexec_fn=os.setsid
+        )
     
     os.close(slave_fd)
     
@@ -834,7 +876,18 @@ async def terminal_websocket(request: web.Request) -> web.WebSocketResponse:
     finally:
         read_task.cancel()
         os.close(master_fd)
-        process.kill()
+        # Don't kill the process - let tmux session persist
+        # Only detach from tmux, allowing commands to continue
+        if session_name:
+            log.info(f"Detaching from tmux session (session persists): {session_name}")
+            # Send Ctrl+B then D to detach from tmux
+            try:
+                os.write(master_fd, b'\x02d')  # Ctrl+B, d
+            except:
+                pass
+        else:
+            # No tmux, kill the process
+            process.kill()
         await ws.close()
         log.info("Terminal WebSocket connection closed")
     
